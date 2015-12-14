@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  image_name: MyString
+  mediable_type: MyString
+  mediable_id: 1
+
+two:
+  image_name: MyString
+  mediable_type: MyString
+  mediable_id: 1
