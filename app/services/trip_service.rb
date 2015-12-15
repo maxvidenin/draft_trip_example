@@ -18,25 +18,25 @@ class TripService
         published: params[:published],
         slug: params[:slug]
     )
-    @trip.save
-    published_trip_content = @trip.create_published_trip_content(
-        title: params[:title],
-        description: params[:description]
-    )
-    draft_trip_content = @trip.create_draft_trip_content(
-        title: params[:title],
-        description: params[:description]
-    )
-
-    if params[:itineraries].any?
-      create_trip_itineraries(published_trip_content, params[:itineraries])
-      create_trip_itineraries(draft_trip_content, params[:itineraries])
+    if @trip.save
+      published_trip_content = @trip.create_published_trip_content(
+          title: params[:title],
+          description: params[:description]
+      )
+      draft_trip_content = @trip.create_draft_trip_content(
+          title: params[:title],
+          description: params[:description]
+      )
+      unless params[:itineraries].blank?
+        create_trip_itineraries(published_trip_content, params[:itineraries])
+        create_trip_itineraries(draft_trip_content, params[:itineraries])
+      end
+      unless params[:media].blank?
+        create_trip_media(published_trip_content, params[:media])
+        create_trip_media(draft_trip_content, params[:media])
+      end
     end
-
-    if params[:media].any?
-      create_trip_media(published_trip_content, params[:media])
-      create_trip_media(draft_trip_content, params[:media])
-    end
+    @trip
   end
 
   def save_draft_content(params)
@@ -61,27 +61,28 @@ class TripService
     Trip.draft.eager_load(:draft_trip_content).all
   end
 
-  def seed_test_trips
+  # TODO remove this
+  def seed_test_trips(amount = 10)
     trips = []
-    (1...2).each do |i|
-      trips.push(Trip.create_trip(generate_test_trip_data(i)))
+    amount.times do
+      trips.push(Trip.create_trip(generate_test_trip_data))
     end
     trips
   end
 
-  def generate_test_trip_data(number = 1)
-    n = number.to_s
+  # TODO remove this
+  def generate_test_trip_data
     {
-      title: 'Test title ' + n,
-      description: 'Test Description ' +n,
+      title: Faker::Lorem.sentence,
+      description: Faker::Lorem.paragraph,
       published: false, user_id: 1,
       itineraries: [
-        {name: 'Test itierary ' + n, string: 'itinerary description ' + n},
-        {name: 'test itiniary '+ n, string: 'itinerary description ' + n}
+        {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address},
+        {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address}
       ],
       media: [
-        {image_name: 'Picture' + n + '.png'},
-        {image_name: 'Picture' + n + '.png'}
+        {image_name: Faker::Lorem.word + '.png'},
+        {image_name: Faker::Lorem.word + '.png'}
       ]
     }
   end
@@ -92,34 +93,34 @@ class TripService
 
   private
     def save_trip_content(trip_content, params)
-      update_trip_content(trip_content, title: params[:title], description: params[:description])
-      if params[:itineraries].any?
+      unless params[:itineraries].blank?
         update_trip_itineraries(trip_content, params[:itineraries])
       end
-      if params[:media].any?
+      unless params[:media].blank?
         update_trip_media(trip_content, params[:media])
       end
+      update_trip_content(trip_content, title: params[:title], description: params[:description])
     end
 
-   def update_trip_media(trip_content, media_params)
+    def update_trip_media(trip_content, media_params)
      trip_content.media.destroy_all
-     trip_content.media.create(media_params)
-   end
+     create_trip_media(trip_content, media_params)
+    end
 
-  def update_trip_itineraries(trip_content, itinerary_params)
-    trip_content.itineraries.destroy_all
-    create_trip_itineraries(trip_content, itinerary_params)
-  end
+    def update_trip_itineraries(trip_content, itinerary_params)
+      trip_content.itineraries.destroy_all
+      create_trip_itineraries(trip_content, itinerary_params)
+    end
 
-  def update_trip_content(trip_content, trip_content_params)
-    trip_content.update_attributes(trip_content_params)
-  end
+    def update_trip_content(trip_content, trip_content_params)
+      trip_content.update_attributes(trip_content_params)
+    end
 
-  def create_trip_itineraries(trip_content, itinerary_params)
-    trip_content.itineraries.create(itinerary_params)
-  end
+    def create_trip_itineraries(trip_content, itinerary_params)
+      trip_content.itineraries.create(itinerary_params)
+    end
 
-  def create_trip_media(trip_content, media_params)
-    trip_content.media.create(media_params)
-  end
+    def create_trip_media(trip_content, media_params)
+      trip_content.media.create(media_params)
+    end
 end
