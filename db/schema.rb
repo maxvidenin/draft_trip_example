@@ -11,15 +11,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151128131528) do
+ActiveRecord::Schema.define(version: 20151215105046) do
 
   create_table "itineraries", force: :cascade do |t|
     t.string   "name"
     t.string   "string"
-    t.integer  "trip_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
+    t.integer  "trip_content_id"
   end
+
+  add_index "itineraries", ["trip_content_id"], name: "index_itineraries_on_trip_content_id"
 
   create_table "media", force: :cascade do |t|
     t.string   "image_name"
@@ -35,6 +37,17 @@ ActiveRecord::Schema.define(version: 20151128131528) do
     t.datetime "updated_at",     null: false
   end
 
+  create_table "trip_contents", force: :cascade do |t|
+    t.integer  "trip_id"
+    t.string   "title"
+    t.text     "description"
+    t.string   "type"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "trip_contents", ["trip_id"], name: "index_trip_contents_on_trip_id"
+
   create_table "trip_payments", force: :cascade do |t|
     t.integer  "trip_id"
     t.integer  "payment_id"
@@ -43,8 +56,6 @@ ActiveRecord::Schema.define(version: 20151128131528) do
   end
 
   create_table "trips", force: :cascade do |t|
-    t.string   "title"
-    t.string   "string"
     t.integer  "user_id"
     t.boolean  "published",  default: false
     t.datetime "created_at",                 null: false
