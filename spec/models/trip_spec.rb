@@ -166,8 +166,6 @@ describe TripService do
       it { should change(Itinerary, :count).by(-2) }
       it { should change(Medium, :count).by(-4) }
     end
-
-    # TODO add tests for the getting single published/draft trip and list of published/draft trips
   end
 
   describe 'create invalid trip' do
@@ -190,6 +188,58 @@ describe TripService do
 
     it { expect(trip_service.valid?).to eq false }
     it { expect(trip_service.error_messages).not_to be_blank }
+  end
+
+
+  describe 'get list of published trips' do
+
+    before do
+      @trips = []
+      10.times do
+        trip_service.save_trip({
+           title: Faker::Lorem.sentence,
+           description: Faker::Lorem.paragraph,
+           published: true,
+           user_id: user.id,
+           itineraries: [
+               {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address}
+           ]
+         })
+        @trips.push(trip_service.trip)
+      end
+    end
+
+    subject { @trips }
+
+    it { expect(@trips.count).to eq 10 }
+    it { expect(trip_service.get_published_trips).to eq @trips }
+    it { expect(@trips.sample.published?).to eq true }
+  end
+
+  describe 'get list of draft trips' do
+
+    before do
+      @trips = []
+      5.times do
+        trip_service.save_trip({
+           title: Faker::Lorem.sentence,
+           description: Faker::Lorem.paragraph,
+           published: false,
+           user_id: user.id,
+           media: [
+             {image_name: Faker::Lorem.word + '.png'}
+           ]
+         })
+        @trips.push(trip_service.trip)
+      end
+    end
+
+    subject { @trips }
+
+    it { expect(@trips.count).to eq 5 }
+    it { expect(trip_service.get_draft_trips).to eq @trips }
+    it { expect(trip_service.get_published_trips).not_to eq @trips }
+    it { expect(@trips.sample.published?).to eq false }
   end
 
   def get_content_comparable_data(trip_content)
