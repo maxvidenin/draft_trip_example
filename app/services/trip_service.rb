@@ -12,7 +12,7 @@ class TripService
     self
   end
 
-  def create_trip(params)
+  def save_trip(params)
     @trip = Trip.new(
         user_id: params[:user_id],
         published: params[:published],
@@ -21,14 +21,22 @@ class TripService
     ActiveRecord::Base.transaction do
       begin
         if @trip.save
-          published_trip_content = @trip.create_published_trip_content(
+          published_trip_content = @trip.build_published_trip_content(
               title: params[:title],
               description: params[:description]
           )
-          draft_trip_content = @trip.create_draft_trip_content(
+          if !published_trip_content.save
+            add_error_messages(:trip_content, published_trip_content.errors.full_messages)
+          end
+
+          draft_trip_content = @trip.build_draft_trip_content(
               title: params[:title],
               description: params[:description]
           )
+          if !draft_trip_content.save
+            add_error_messages(:trip_content, draft_trip_content.errors.full_messages)
+          end
+
           unless params[:itineraries].blank?
             save_trip_itineraries(published_trip_content, [])
             save_trip_itineraries(draft_trip_content, params[:itineraries])
@@ -37,15 +45,15 @@ class TripService
             save_trip_media(published_trip_content, params[:media])
             save_trip_media(draft_trip_content, params[:media])
           end
+          return true
+        else
+          add_error_messages(:trip, @trip.errors.full_messages)
         end
       rescue
-        add_error_messages(:trip, @trip.errors.full_messages)
-        add_error_messages(:trip_content, @trip.published_trip_content.errors.full_messages)
-        add_error_messages(:trip_content, @trip.draft_trip_content.errors.full_messages)
         raise ActiveRecord::Rollback
       end
     end
-    @trip
+    return false
   end
 
   def save_draft_content(params)
@@ -98,6 +106,10 @@ class TripService
 
   def destroy_trip
     @trip.destroy
+  end
+
+  def valid?
+    @error_messages.blank?
   end
 
   private
