@@ -71,6 +71,14 @@ class TripService
     Trip.draft.eager_load(:draft_trip_content).all
   end
 
+  def get_draft_version
+    @trip.draft_trip_content
+  end
+
+  def get_published_version
+    @trip.published_trip_content
+  end
+
   def publish_trip!
     params = {
       title: @trip.draft_trip_content.title,
@@ -101,13 +109,25 @@ class TripService
 
   private
     def save_trip_content(trip_content, params)
-      unless params[:itineraries].blank?
-        update_trip_itineraries(trip_content, params[:itineraries])
+      ActiveRecord::Base.transaction do
+        begin
+          update_trip_content(trip_content, title: params[:title], description: params[:description])
+          unless params[:itineraries].blank?
+            update_trip_itineraries(trip_content, params[:itineraries])
+          end
+          unless params[:media].blank?
+            update_trip_media(trip_content, params[:media])
+          end
+          if @error_messages.blank?
+            return true
+          else
+            raise ActiveRecord::Rollback
+          end
+        rescue
+          raise ActiveRecord::Rollback
+        end
       end
-      unless params[:media].blank?
-        update_trip_media(trip_content, params[:media])
-      end
-      update_trip_content(trip_content, title: params[:title], description: params[:description])
+      return false
     end
 
     def update_trip_media(trip_content, media_params)
@@ -121,7 +141,9 @@ class TripService
     end
 
     def update_trip_content(trip_content, trip_content_params)
-      trip_content.update_attributes(trip_content_params)
+      if !trip_content.update_attributes(trip_content_params)
+        add_error_messages(:trip_content, trip_content.errors.full_messages)
+      end
     end
 
     def save_trip_itineraries(trip_content, itinerary_params)
@@ -129,18 +151,15 @@ class TripService
         itinerary_content = trip_content.itineraries.build(itinerary)
         if !itinerary_content.save
           add_error_messages(:itinerary, itinerary_content.errors.full_messages)
-          raise ActiveRecord::Rollback
         end
       end
     end
 
     def save_trip_media(trip_content, media_params)
-      # trip_content.media.create(media_params)
       media_params.each do |media|
         media_content = trip_content.media.build(media)
         if !media_content.save
           add_error_messages(:media, media_content.errors.full_messages)
-          raise ActiveRecord::Rollback
         end
       end
     end

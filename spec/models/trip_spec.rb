@@ -34,6 +34,25 @@ describe TripService do
     it { should respond_to(:draft_trip_content) }
     it { expect(@trip.user).to eq user }
 
+    describe 'save invalid draft of existing trip' do
+      before do
+        trip_service.save_draft_content({
+          title: Faker::Lorem.sentence,
+          description: '',
+          published: false,
+          user_id: user.id,
+          itineraries: [
+            {name: Faker::Address.country}
+          ],
+          media: [
+            {image_name: ''}
+          ]
+        })
+      end
+
+      it { expect(trip_service.valid?).to eq false }
+      it { expect(trip_service.error_messages).not_to be_blank }
+    end
 
     describe 'save draft of existing trip' do
       before do
@@ -105,25 +124,25 @@ describe TripService do
     end
 
     describe 'publish existing draft trip' do
-      before {trip_service.publish_trip!}
-      it { expect(@trip.published?).to eq true }
-
-      it 'trip content data after publishing should be equal' do
-        expect(get_content_comparable_data(@trip.draft_trip_content)
-        ).to eq get_content_comparable_data(@trip.published_trip_content)
+      before do
+        trip_service.unpublish_trip!
+        trip_service.save_draft_content({
+          title: Faker::Lorem.sentence,
+          description: Faker::Lorem.paragraph,
+          published: false,
+          user_id: user.id,
+          itineraries: [
+            {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address},
+            {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address}
+          ],
+          media: [
+            {image_name: Faker::Lorem.word + '.png'},
+            {image_name: Faker::Lorem.word + '.png'},
+            {image_name: Faker::Lorem.word + '.png'}
+          ]
+        })
+        trip_service.publish_trip!
       end
-      it 'trip media data after publishing should be equal' do
-        expect(get_media_comparable_data(@trip.draft_trip_content.media)
-        ).to eq get_media_comparable_data(@trip.published_trip_content.media)
-      end
-      it 'trip itineraries data after publishing should be equal' do
-        expect(get_itineraries_comparable_data(@trip.draft_trip_content.itineraries)
-        ).to eq get_itineraries_comparable_data(@trip.published_trip_content.itineraries)
-      end
-    end
-
-    describe 'publish existing draft trip' do
-      before {trip_service.publish_trip!}
       it { expect(@trip.published?).to eq true }
 
       it 'trip content data after publishing should be equal' do
