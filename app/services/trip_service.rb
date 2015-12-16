@@ -6,12 +6,6 @@ class TripService
     @error_messages = {}
   end
 
-  def publish_trip!
-    @trip.published = true
-    @trip.save!
-    self
-  end
-
   def save_trip(params)
     @trip = Trip.new(
         user_id: params[:user_id],
@@ -66,7 +60,6 @@ class TripService
 
   def save_and_publish(params)
     save_draft_content(params)
-    save_published_content(params)
     publish_trip!
   end
 
@@ -78,30 +71,24 @@ class TripService
     Trip.draft.eager_load(:draft_trip_content).all
   end
 
-  # TODO remove this
-  def seed_test_trips(amount = 10)
-    trips = []
-    amount.times do
-      trips.push(Trip.create_trip(generate_test_trip_data))
-    end
-    trips
+  def publish_trip!
+    params = {
+      title: @trip.draft_trip_content.title,
+      description: @trip.draft_trip_content.description,
+      itineraries: @trip.draft_trip_content.itineraries.map {|itinerary| {name: itinerary.name, string: itinerary.string}},
+      media: @trip.draft_trip_content.media.map {|media| {image_name: media.image_name}}
+    }
+
+    save_published_content(params)
+    @trip.published = true
+    @trip.save!
+    self
   end
 
-  # TODO remove this
-  def generate_test_trip_data
-    {
-      title: Faker::Lorem.sentence,
-      description: Faker::Lorem.paragraph,
-      published: false, user_id: 1,
-      itineraries: [
-        {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address},
-        {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address}
-      ],
-      media: [
-        {image_name: Faker::Lorem.word + '.png'},
-        {image_name: Faker::Lorem.word + '.png'}
-      ]
-    }
+  def unpublish_trip!
+    @trip.published = false
+    @trip.save!
+    self
   end
 
   def destroy_trip
