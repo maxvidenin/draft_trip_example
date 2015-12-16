@@ -149,30 +149,39 @@ describe TripService do
     end
 
     # TODO add tests for the getting single published/draft trip and list of published/draft trips
-  #   TODO try to create not valid trip
+  end
+
+  describe 'create invalid trip' do
+    before do
+      trip_service.save_trip({
+         title: Faker::Lorem.sentence,
+         description: '',
+         published: true,
+         user_id: user.id,
+         itineraries: [
+           {name: Faker::Address.country, string: Faker::Address.city + ' '  + Faker::Address.street_address},
+           {name: Faker::Address.country, string: ''}
+         ],
+         media: [
+           {image_name: Faker::Lorem.word + '.png'},
+           {}
+         ]
+     })
+    end
+
+    it { expect(trip_service.valid?).to eq false }
+    it { expect(trip_service.error_messages).not_to be_blank }
   end
 
   def get_content_comparable_data(trip_content)
-    {
-      title: trip_content.title,
-      description: trip_content.description
-    }
+    {title: trip_content.title, description: trip_content.description}
   end
 
   def get_media_comparable_data(trip_media)
-    trip_media.map do |media|
-      {
-        image_name: media.image_name
-      }
-    end
+    trip_media.map { |media| { image_name: media.image_name} }
   end
 
   def get_itineraries_comparable_data(trip_itineraries)
-    trip_itineraries.map do |itinerary|
-      {
-        name: itinerary.name,
-        string: itinerary.string
-      }
-    end
+    trip_itineraries.map { |itinerary| { name: itinerary.name, string: itinerary.string} }
   end
 end
