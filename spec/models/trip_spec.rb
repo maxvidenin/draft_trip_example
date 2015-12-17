@@ -34,6 +34,23 @@ describe TripService do
     it { should respond_to(:draft_trip_content) }
     it { expect(@trip.user).to eq user }
 
+    describe 'get draft/published versions of the trip' do
+      before do
+        @draft_trip_version = trip_service.get_draft_version
+        @published_trip_version = trip_service.get_published_version
+      end
+
+      it { expect(@draft_trip_version.id).to eq @published_trip_version.id}
+      it 'draft title and published title should be equal' do
+        expect(@draft_trip_version.draft_trip_content.title
+        ).to eq @published_trip_version.published_trip_content.title
+      end
+      it 'draft description and published title should be equal' do
+        expect(@draft_trip_version.draft_trip_content.description
+        ).to eq @published_trip_version.published_trip_content.description
+      end
+    end
+
     describe 'save invalid draft of existing trip' do
       before do
         trip_service.save_draft_content({
@@ -81,6 +98,23 @@ describe TripService do
       it 'draft trip itineraries should not be equal published trip itineraries' do
         expect(get_itineraries_comparable_data(@trip.draft_trip_content.itineraries)
         ).not_to eq get_itineraries_comparable_data(@trip.published_trip_content.itineraries)
+      end
+
+      describe 'get draft/published versions of the trip' do
+        before do
+          @draft_trip_version = trip_service.get_draft_version
+          @published_trip_version = trip_service.get_published_version
+        end
+
+        it { expect(@draft_trip_version.id).to eq @published_trip_version.id}
+        it 'draft title and published title should be equal' do
+          expect(@draft_trip_version.draft_trip_content.title
+          ).not_to eq @published_trip_version.published_trip_content.title
+        end
+        it 'draft description and published title should be equal' do
+          expect(@draft_trip_version.draft_trip_content.description
+          ).not_to eq @published_trip_version.published_trip_content.description
+        end
       end
     end
 
@@ -189,7 +223,6 @@ describe TripService do
     it { expect(trip_service.valid?).to eq false }
     it { expect(trip_service.error_messages).not_to be_blank }
   end
-
 
   describe 'get list of published trips' do
 

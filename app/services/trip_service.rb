@@ -72,11 +72,11 @@ class TripService
   end
 
   def get_draft_version
-    @trip.draft_trip_content
+    Trip.eager_load(:draft_trip_content).find_by(id: @trip.try(:id))
   end
 
   def get_published_version
-    @trip.published_trip_content
+    Trip.eager_load(:published_trip_content).find_by(id: @trip.try(:id))
   end
 
   def publish_trip!
