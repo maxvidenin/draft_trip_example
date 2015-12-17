@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  trip_id: 
+  title: MyString
+  description: MyText
+  mediable: MyString
+  type: 
+
+two:
+  trip_id: 
+  title: MyString
+  description: MyText
+  mediable: MyString
+  type: 
